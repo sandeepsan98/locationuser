@@ -1,0 +1,12 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+.shadow-xl {
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+}
+.transition {
+    transition: all 0.3s ease;
+}
+#my-map {
+    height: calc(100vh - 64px); /* Adjust for header height */
+}

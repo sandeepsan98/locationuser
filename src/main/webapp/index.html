@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Location Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <style>
+        #my-map { height: 400px; z-index: 1; }
+        #editFormContainer, #alertFormContainer, #notificationsContainer, #forecastContainer {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #forecastContainer { width: 500px; max-height: 80vh; overflow-y: auto; }
+        #forecastList { display: grid; gap: 10px; }
+        .forecast-day { background: #374151; padding: 15px; border-radius: 6px; }
+        #notificationList { max-height: 300px; overflow-y: auto; }
+        .notification { background: #374151; padding: 10px; margin-bottom: 10px; border-radius: 6px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl mb-4">Location Tracker</h1>
+    <button id="getLocationBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mb-4">Get My Location</button>
+    <button id="showNotifications" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded mb-4">Notifications</button>
+    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mb-4">Logout</button>
+
+    <div class="mb-4">
+        <label for="searchQuery" class="block mb-1">Search Location:</label>
+        <div class="flex">
+            <input id="searchQuery" type="text" class="w-full p-2 bg-gray-800 rounded-l" placeholder="e.g., Eiffel Tower">
+            <button id="searchBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r">Search</button>
+        </div>
+        <div id="searchResult" class="mt-2"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="street" class="block mb-1">Street:</label>
+            <input id="street" type="text" class="w-full p-2 bg-gray-800 rounded" readonly>
+            <label for="city" class="block mb-1 mt-2">City:</label>
+            <input id="city" type="text" class="w-full p-2 bg-gray-800 rounded" readonly>
+            <label for="weather" class="block mb-1 mt-2">Weather:</label>
+            <input id="weather" type="text" class="w-full p-2 bg-gray-800 rounded" readonly>
+            <label for="tags" class="block mb-1 mt-2">Tags (comma-separated):</label>
+            <input id="tags" type="text" class="w-full p-2 bg-gray-800 rounded" placeholder="e.g., Home, Work">
+            <label for="isFavorite" class="block mb-1 mt-2 flex items-center">
+                <input id="isFavorite" type="checkbox" class="mr-2"> Favorite
+            </label>
+        </div>
+        <div id="my-map" class="w-full rounded"></div>
+    </div>
+
+    <h2 class="text-xl mt-6 mb-2">Saved Locations</h2>
+    <div id="locationList" class="max-h-64 overflow-y-auto"></div>
+    <div class="mt-4 flex items-center">
+        <button id="prevPage" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" disabled>Previous</button>
+        <button id="nextPage" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" disabled>Next</button>
+        <label for="transportMode" class="mr-2">Mode:</label>
+        <select id="transportMode" class="p-2 bg-gray-800 rounded mr-2">
+            <option value="driving-car">Car</option>
+            <option value="cycling-regular">Bike</option>
+            <option value="foot-walking">Walk</option>
+            <option value="public-transit" disabled>Transit (Coming Soon)</option>
+        </select>
+        <label class="flex items-center mr-2">
+            <input type="checkbox" id="optimizeRoute" class="mr-1"> Optimize Route
+        </label>
+        <button id="suggestRouteBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded" disabled>Suggest Route</button>
+    </div>
+
+    <div id="forecastContainer">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg">7-Day Weather Forecast</h3>
+            <button id="closeForecast" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Close</button>
+        </div>
+        <div id="forecastList"></div>
+    </div>
+
+    <div id="editFormContainer">
+        <h3 class="text-lg mb-2">Edit Location</h3>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <label for="editName" class="block mb-1">Name:</label>
+            <input id="editName" type="text" class="w-full p-2 bg-gray-800 rounded mb-2">
+            <label for="editStreet" class="block mb-1">Street:</label>
+            <input id="editStreet" type="text" class="w-full p-2 bg-gray-800 rounded mb-2">
+            <label for="editCity" class="block mb-1">City:</label>
+            <input id="editCity" type="text" class="w-full p-2 bg-gray-800 rounded mb-2">
+            <label for="editCountry" class="block mb-1">Country:</label>
+            <input id="editCountry" type="text" class="w-full p-2 bg-gray-800 rounded mb-2">
+            <label for="editTags" class="block mb-1">Tags (comma-separated):</label>
+            <input id="editTags" type="text" class="w-full p-2 bg-gray-800 rounded mb-2" placeholder="e.g., Home, Work">
+            <label for="editIsFavorite" class="block mb-1 flex items-center">
+                <input id="editIsFavorite" type="checkbox" class="mr-2"> Favorite
+            </label>
+            <button type="button" id="updateCoords" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-2">Update with Current Location</button>
+            <div class="flex justify-between">
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Save</button>
+                <button type="button" id="cancelEdit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="alertFormContainer">
+        <h3 class="text-lg mb-2">Set Weather Alert</h3>
+        <form id="alertForm">
+            <input type="hidden" id="alertLocationId">
+            <label for="minTemp" class="block mb-1">Min Temperature (°C):</label>
+            <input id="minTemp" type="number" step="0.1" class="w-full p-2 bg-gray-800 rounded mb-2">
+            <label for="maxTemp" class="block mb-1">Max Temperature (°C):</label>
+            <input id="maxTemp" type="number" step="0.1" class="w-full p-2 bg-gray-800 rounded mb-2">
+            <label for="weatherCondition" class="block mb-1">Weather Condition:</label>
+            <select id="weatherCondition" class="w-full p-2 bg-gray-800 rounded mb-2">
+                <option value="">Select Condition</option>
+                <option value="Clear sky">Clear Sky</option>
+                <option value="Mainly clear">Mainly Clear</option>
+                <option value="Partly cloudy">Partly Cloudy</option>
+                <option value="Overcast">Overcast</option>
+                <option value="Fog">Fog</option>
+                <option value="Light drizzle">Light Drizzle</option>
+                <option value="Light rain">Light Rain</option>
+                <option value="Moderate rain">Moderate Rain</option>
+                <option value="Rain showers">Rain Showers</option>
+                <option value="Thunderstorm">Thunderstorm</option>
+            </select>
+            <div class="flex justify-between">
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Set Alert</button>
+                <button type="button" id="cancelAlert" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="notificationsContainer">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg">Notifications</h3>
+            <button id="closeNotifications" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Close</button>
+        </div>
+        <div id="notificationList"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

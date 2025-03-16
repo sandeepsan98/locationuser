@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Shared Location</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <style>#map { height: 500px; }</style>
+</head>
+<body class="bg-gray-900 text-white">
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl mb-4">Shared Location</h1>
+    <div id="map" class="w-full rounded"></div>
+    <div id="locationInfo" class="mt-4"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+    const BASE_URL = '/locationweb';
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareToken = urlParams.get('token');
+
+    function showToast(message, type = 'success') {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: 'top',
+            position: 'right',
+            style: { background: type === 'success' ? '#10B981' : '#EF4444' },
+        }).showToast();
+    }
+
+    async function loadSharedLocation() {
+        if (!shareToken) {
+            showToast('No share token provided in URL', 'error');
+            return;
+        }
+
+        try {
+            const response = await axios.get(`${BASE_URL}/locations/view-shared/${shareToken}`);
+            if (response.data.success) {
+                const { data } = response.data;
+                const map = L.map('map').setView([data.latitude, data.longitude], 18);
+                L.tileLayer('https://maps.geoapify.com/v1/tile/osm-carto/{z}/{x}/{y}.png?apiKey=01369d8d7c974b61b45ad10e0b1be91c', {
+                    attribution: 'Powered by Geoapify | © OpenStreetMap contributors',
+                    maxZoom: 20
+                }).addTo(map);
+                L.marker([data.latitude, data.longitude]).addTo(map);
+                document.getElementById('locationInfo').innerHTML = `
+                    <p><strong>Name:</strong> ${data.name || 'Unnamed'}</p>
+                    <p><strong>Street:</strong> ${data.street}</p>
+                    <p><strong>City:</strong> ${data.city}</p>
+                    <p><strong>Country:</strong> ${data.country}</p>
+                    <p><strong>Weather:</strong> ${data.weather_condition} (${data.temperature}°C)</p>
+                `;
+            } else {
+                showToast(response.data.message || 'Failed to load shared location', 'error');
+            }
+        } catch (error) {
+            showToast('Error: ' + (error.response?.data?.message || error.message), 'error');
+        }
+    }
+
+    loadSharedLocation();
+</script>
+</body>
+</html>
