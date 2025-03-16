@@ -1,5 +1,3 @@
-Below is a comprehensive GitHub README for your Location Tracker project. This README includes an overview of the project, technologies used, APIs integrated, setup instructions, usage guide, application flow, features, and additional details to serve as proper product documentation.
-
 ---
 
 # Location Tracker
@@ -73,7 +71,7 @@ The primary goal of this project is to offer a seamless experience for tracking 
 ## APIs Integrated
 1. **Geoapify API**
    - **Purpose**: Geocoding (search by name) and reverse geocoding (address from coordinates).
-   - **API Key**: `01369d8d7c974b61b45ad10e0b1be91c`
+   - **API Key**: `key`
    - **Endpoints**:
      - `/v1/geocode/search`: Search for locations by name.
      - `/v1/geocode/reverse`: Get address details from coordinates.
@@ -81,7 +79,7 @@ The primary goal of this project is to offer a seamless experience for tracking 
 
 2. **OpenRouteService API**
    - **Purpose**: Route planning and optimization between multiple locations.
-   - **API Key**: `5b3ce3597851110001cf62486e6fdbf5d05f45a9b37f72dd1e3c343a`
+   - **API Key**: `key`
    - **Endpoint**: `/v2/directions/{profile}`
    - **Usage**: Generates routes for selected transport modes (car, bike, walking) with optional optimization.
 
@@ -93,7 +91,7 @@ The primary goal of this project is to offer a seamless experience for tracking 
 ---
 
 ## Prerequisites
-- **Java 11+**: Required for running the backend.
+- **Java 17+**: Required for running the backend.
 - **Maven**: For dependency management and building the project.
 - **MySQL**: Database server for storing application data.
 - **Apache Tomcat 9+**: Servlet container for deployment.
@@ -299,19 +297,8 @@ The primary goal of this project is to offer a seamless experience for tracking 
 
 ---
 
-## Contributing
-Contributions are welcome! Please follow these steps:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Commit your changes (`git commit -m "Add your feature"`).
-4. Push to the branch (`git push origin feature/your-feature`).
-5. Open a Pull Request.
+
+
 
 ---
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-This README provides a complete overview of your Location Tracker project, suitable for GitHub and as product documentation. Feel free to customize it further by adding screenshots, additional sections (e.g., troubleshooting, FAQs), or specific deployment instructions for your environment. Let me know if you'd like to refine any part!
