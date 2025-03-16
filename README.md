@@ -16,8 +16,7 @@ A web-based application for tracking, managing, and sharing locations with real-
 8. [Application Flow](#application-flow)
 9. [Database Schema](#database-schema)
 10. [Security](#security)
-11. [Contributing](#contributing)
-12. [License](#license)
+
 
 ---
 
